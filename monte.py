@@ -25,7 +25,7 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/RESULT":
         new_result = payload["Result"]
-        print("New result received: %d", new_result)
+        print("New result received: %d" % new_result)
 
 def weighted_random(x, y):
     """
@@ -55,13 +55,13 @@ def test_points(point):
     global num
     global new_result
     num = num + 1
-    print("Publishing new set, No: %d, P: %f, I: %f, D: %f", num, point[0], point[1], point[2])
+    print("Publishing new set, No: %d, P: %f, I: %f, D: %f" % (num, point[0], point[1], point[2]))
     client.publish("/GIMBAL/TRAINING/SET", json.dumps({"No": num, "Kp": point[0], "Ki": point[1], "Kd": point[2]}))
     new_result = -1
     while new_result < 0:
         client.publish("/GIMBAL/TRAINING/SET", json.dumps({"No": num, "Kp": point[0], "Ki": point[1], "Kd": point[2]}))
         time.sleep(0.2)
-    print("New result comfirmed: %d", new_result)
+    print("New result comfirmed: %d" % new_result)
     return new_result
     # return((point[0]-0.1)**2+(point[1]-0.2)**2+(point[2]-0.3)**2)
 # kp_lower=0

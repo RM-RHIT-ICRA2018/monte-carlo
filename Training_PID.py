@@ -59,7 +59,7 @@ def on_message(client, userdata, msg):
             PID_set[2][Motor_Num] = payload["Kd"]
             set_no = payload["No"]
             # PID_set[3][Motor_Num] = payload["Gi"]
-            print("New set received, No: %d, P: %f, I: %f, D: %f", set_no, PID_set[0][Motor_Num], PID_set[1][Motor_Num], PID_set[2][Motor_Num])
+            print("New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][Motor_Num], PID_set[1][Motor_Num], PID_set[2][Motor_Num]))
             pid_updated = False
             new_set = True
     elif msg.topic == "/PID_FEEDBACK/CAN":
@@ -91,7 +91,7 @@ def test_task():
 
 def do_test():
     if new_set:
-        print("Test starts, No: %d",set_no)
+        print("Test starts, No: %d" % set_no)
         # while not pid_updated:
         #     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
         #     time.sleep(0.2)
@@ -99,7 +99,7 @@ def do_test():
         reset_robot()
         count = 0
         for i in range(rounds):
-            print("Task Round %d", i)
+            print("Task Round %d" % i)
             test_task()
         client.publish("/GIMBAL/TRAINING/RESULT", json.dumps({"Result": count}))
         robot_stop()
