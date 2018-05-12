@@ -2,8 +2,8 @@ import socket, struct, sys, json, time, os.path, threading, math, random
 import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
 
-
-Motor_Num = 4
+PID_Items_BASIC = ["Chassis_Upper", "Chassis_Lower","Yaw_Upper","Yaw_Lower","Pitch_Upper","Pitch_Lower","Feeding_Upper","Feeding_Lower"]
+PID_Item_No = 2
 rounds = 1
 start_point = [0,0,0]
 threshold = 1
@@ -54,20 +54,20 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/SET":
         if set_no != payload["No"]:
-            PID_set[0][Motor_Num] = payload["Kp"]
-            PID_set[1][Motor_Num] = payload["Ki"]
-            PID_set[2][Motor_Num] = payload["Kd"]
+            PID_set[0][PID_Item_No] = payload["Kp"]
+            PID_set[1][PID_Item_No] = payload["Ki"]
+            PID_set[2][PID_Item_No] = payload["Kd"]
             set_no = payload["No"]
-            # PID_set[3][Motor_Num] = payload["Gi"]
-            print("New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][Motor_Num], PID_set[1][Motor_Num], PID_set[2][Motor_Num]))
+            # PID_set[3][PID_Item_No] = payload["Gi"]
+            print("New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][PID_Item_No], PID_set[1][PID_Item_No], PID_set[2][PID_Item_No]))
             pid_updated = False
             new_set = True
     elif msg.topic == "/PID_FEEDBACK/CAN":
-        if payload["Ps"][Motor_Num] == PID_set[0][Motor_Num] and payload["Is"][Motor_Num] == PID_set[1][Motor_Num] and payload["Ds"][Motor_Num] == PID_set[2][Motor_Num]:
+        if payload["Ps"][PID_Item_No] == PID_set[0][PID_Item_No] and payload["Is"][PID_Item_No] == PID_set[1][PID_Item_No] and payload["Ds"][PID_Item_No] == PID_set[2][PID_Item_No]:
             pid_updated = True
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
-            wanted = motor_name(Motor_Num)
+            wanted = motor_name(PID_Item_No)
             if abs(payload[wanted]) < threshold:
                 count = count + 1
     elif msg.topic == "/UWB/PUS":
@@ -93,15 +93,16 @@ def do_test():
     global count
     if new_set:
         print("Test starts, No: %d" % set_no)
-        # while not pid_updated:
-        #     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
-        #     time.sleep(0.2)
+        while not pid_updated:
+            client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
+            time.sleep(0.2)
         print("PID update success")
         reset_robot()
         count = 0
         for i in range(rounds):
             print("Task Round %d" % i)
             test_task()
+        print("Publishing result: %d" % count)
         client.publish("/GIMBAL/TRAINING/RESULT", json.dumps({"Result": count}))
         robot_stop()
 
