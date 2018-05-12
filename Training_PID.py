@@ -90,6 +90,7 @@ def test_task():
     count = random.randint(0, 100)
 
 def do_test():
+    global count
     if new_set:
         print("Test starts, No: %d" % set_no)
         # while not pid_updated:
