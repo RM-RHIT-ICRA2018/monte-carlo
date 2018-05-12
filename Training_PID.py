@@ -96,7 +96,7 @@ def do_test():
             time.sleep(0.2)
         reset_robot()
         count = 0
-        for i in range(rounds):
+        for _ in range(rounds):
             test_task()
         client.publish("/GIMBAL/TRAINING/RESULT", json.dumps({"Result": count}))
         robot_stop()
