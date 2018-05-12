@@ -1,10 +1,7 @@
 import socket, struct, sys, json, time, os.path, threading, math, random
 import serial, select, copy, pdb, pyvesc as esc
 import paho.mqtt.client as mqtt
-import BSP_ERROR, BSP_PID as PID
-import BSP_ROBOT_CONFIG as ROB
 
-rob = ROB.robot()
 
 Motor_Num = 4
 rounds = 1
@@ -15,7 +12,7 @@ point_threshold = [10, 10, 2]
 PID_set = [[],[],[]]
 set_no = 0
 for i in range(3):
-    for j in range(len(rob.PID_Items)):
+    for j in range(13):
         PID_set[i].append(0.0)
 count = 0
 new_set = False
@@ -30,13 +27,13 @@ def motor_name(no):
         return "dy"
 
 def on_connect(client, userdata, flags, rc):
-    print(BSP_ERROR.notice("MQTT Interface Bind Success."))
+    print("MQTT Interface Bind Success.")
     client.subscribe("/GIMBAL/SET")
     client.subscribe("/GIMBAL/TRAINING/SET")
     client.subscribe("/PID_FEEDBACK/CAN")
     client.subscribe("/UWB/PUS")
 
-    print(BSP_ERROR.notice("MQTT Subscribe Success"))
+    print("MQTT Subscribe Success")
     # t = threading.Thread(target = CAN_RCV_LOOP)
     # t.start()
 
@@ -124,7 +121,7 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-print(BSP_ERROR.info("MQTT Interface Start Binding."))
+print("MQTT Interface Start Binding.")
 
 client.connect("127.0.0.1", 1883, 60)
 

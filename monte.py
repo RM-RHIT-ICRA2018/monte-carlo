@@ -3,7 +3,6 @@ import numpy as np
 from math import exp,sqrt
 import paho.mqtt.client as mqtt
 import json
-import BSP_ERROR
 # x = [[i,i] for i in range(100)]
 # y = [2 for i in range(100)]
 # ysum = sum(y)
@@ -16,10 +15,10 @@ new_result = -1
 num = 0
 
 def on_connect(client, userdata, flags, rc):
-    print(BSP_ERROR.notice("MQTT Interface Bind Success."))
+    print("MQTT Interface Bind Success.")
     client.subscribe("/GIMBAL/TRAINING/RESULT")
 
-    print(BSP_ERROR.notice("MQTT Subscribe Success"))
+    print("MQTT Subscribe Success")
 
 def on_message(client, userdata, msg):
     global new_result
@@ -119,7 +118,7 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-print(BSP_ERROR.info("MQTT Interface Start Binding."))
+print("MQTT Interface Start Binding.")
 
 client.connect("127.0.0.1", 1883, 60)
 
