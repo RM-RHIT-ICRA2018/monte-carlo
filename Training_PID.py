@@ -63,12 +63,13 @@ def on_message(client, userdata, msg):
             pid_updated = False
             new_set = True
     elif msg.topic == "/PID_FEEDBACK/CAN":
-        if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
-            if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
-                if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
-                    pid_updated = True
-                    return
-        pid_updated = False
+        if not pid_updated:
+            if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
+                if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
+                    if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
+                        pid_updated = True
+                        return
+            pid_updated = False
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
@@ -95,6 +96,7 @@ def test_task():
 
 def do_test():
     global count
+    global pid_updated
     if new_set:
         pid_updated = False
         print("Test starts, No: %d" % set_no)
