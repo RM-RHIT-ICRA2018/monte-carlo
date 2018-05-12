@@ -92,9 +92,10 @@ def test_task():
 def do_test():
     if new_set:
         print("Test starts, No: %d",set_no)
-        while not pid_updated:
-            client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
-            time.sleep(0.2)
+        # while not pid_updated:
+        #     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
+        #     time.sleep(0.2)
+        print("PID update success")
         reset_robot()
         count = 0
         for i in range(rounds):
