@@ -21,9 +21,9 @@ robot_ready = False
 current_point = [0,0,0]
 
 def motor_name(no):
-    if no == 4:
+    if no == 2:
         return "dx"
-    if no == 5:
+    if no == 4:
         return "dy"
 
 def on_connect(client, userdata, flags, rc):
@@ -80,7 +80,7 @@ def on_message(client, userdata, msg):
         current_point[1] = payload["posY"]
         # current_point[2] = payload["posPhi"]
         robot_ready = if_ready()
-    
+
 def robot_stop():
     pass
 
@@ -119,12 +119,12 @@ class TestThread(threading.Thread):
 
     def run(self):
         while 1:
-            do_test()      
+            do_test()
 
 
-        
 
-    
+
+
 
 
 client = mqtt.Client()
