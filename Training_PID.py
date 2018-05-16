@@ -8,7 +8,7 @@ rounds = 1
 start_point = [0,0,0]
 start_initialized = [False,False,False]
 threshold = 1
-point_threshold = [10, 10, 5]
+point_threshold = [10, 10, 10]
 
 target_point = [0,0,0]
 PID_set = [[],[],[]]
@@ -132,12 +132,15 @@ def test_task():
     global start_point
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 45)]
     while not at_point(target_point, current_point):
+        time.sleep(0.1)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 45)]
     while not at_point(target_point, current_point):
+        time.sleep(0.1)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2])]
     while not at_point(target_point, current_point):
+        time.sleep(0.1)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
 
 def do_test():
