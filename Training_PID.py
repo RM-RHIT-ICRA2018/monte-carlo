@@ -6,9 +6,11 @@ PID_Items_BASIC = ["Chassis_Upper", "Chassis_Lower","Yaw_Upper","Yaw_Lower","Pit
 PID_Item_No = 2
 rounds = 1
 start_point = [0,0,0]
+start_initialized = [False,False,False]
 threshold = 1
-point_threshold = [10, 10, 2]
+point_threshold = [10, 10, 5]
 
+target_point = [0,0,0]
 PID_set = [[],[],[]]
 set_no = 0
 for i in range(3):
@@ -31,17 +33,24 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/GIMBAL/SET")
     client.subscribe("/GIMBAL/TRAINING/SET")
     client.subscribe("/PID_FEEDBACK/CAN")
-    client.subscribe("/UWB/PUS")
+    client.subscribe("/UWB/POS")
+    client.subscribe("/CHASSIS/AHRS/ALIG")
 
     print("MQTT Subscribe Success")
     # t = threading.Thread(target = CAN_RCV_LOOP)
     # t.start()
 
-def if_ready():
+def at_point(p1, p2):
     for i in range(3):
-        if current_point[i] - start_point[i] > point_threshold[i]:
+        if abs(p1[i] - p2[i]) > point_threshold[i]:
             return False
     return True
+
+def if_ready():
+    for i in range(3):
+        if not start_initialized[i]:
+            return False
+    return at_point(current_point, start_point)
 
 def on_message(client, userdata, msg):
     global new_set
@@ -75,24 +84,48 @@ def on_message(client, userdata, msg):
             wanted = motor_name(PID_Item_No)
             if abs(payload[wanted]) < threshold:
                 count = count + 1
-    elif msg.topic == "/UWB/PUS":
-        current_point[0] = payload["posX"]
-        current_point[1] = payload["posY"]
-        # current_point[2] = payload["posPhi"]
+    elif msg.topic == "/UWB/POS":
+        if start_initialized[0]:
+            current_point[0] = payload["posX"]
+        else:
+            start_point[0] = payload["posX"]
+            start_initialized[0] = True
+        if start_initialized[1]:
+            current_point[1] = payload["posY"]
+        else:
+            start_point[1] = payload["posY"]
+            start_initialized[1] = True
         robot_ready = if_ready()
+        
+    elif msg.topic == "/CHASSIS/AHRS/ALIG":
+        if start_initialized[2]:
+            current_point[2] = payload["Yaw"]
+            robot_ready = if_ready()
+        else:
+            start_point[2] = payload["Yaw"]
+            start_initialized[2] = True
 
 def robot_stop():
-    pass
+    client.publish("/CHASSIS/SET", json.dumps({"Type": "velocity", "XSet": 0, "YSet": 0, "PhiSet": 0}))
+
 
 def reset_robot():
-    return
     while not robot_ready:
-        pass
+        client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": start_point[0], "YSet": start_point[1], "PhiSet": start_point[2]}))
 
 def test_task():
-    global count
-    time.sleep(5)
-    count = random.randint(0, 100)
+    global target_point
+    global current_point
+    global start_point
+    target_point = [start_point[0], start_point[1], start_point[2] + 45]
+    while not at_point(target_point, current_point):
+        client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
+    target_point = [start_point[0], start_point[1], start_point[2] - 45]
+    while not at_point(target_point, current_point):
+        client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
+    target_point = [start_point[0], start_point[1], start_point[2]]
+    while not at_point(target_point, current_point):
+        client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
 
 def do_test():
     global count
@@ -100,10 +133,10 @@ def do_test():
     if new_set:
         pid_updated = False
         print("Test starts, No: %d" % set_no)
-        while not pid_updated:
-            client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
-            time.sleep(0.2)
-        print("PID update success")
+        # while not pid_updated:
+        #     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
+        #     time.sleep(0.2)
+        # print("PID update success")
         reset_robot()
         count = 0
         for i in range(rounds):
