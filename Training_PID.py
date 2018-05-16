@@ -43,7 +43,13 @@ def on_connect(client, userdata, flags, rc):
 
 def at_point(p1, p2):
     for i in range(3):
-        if abs(p1[i] - p2[i]) > point_threshold[i]:
+        error = p1[i] - p2[i]
+        if i == 2:
+            if error > 180:
+                error = error - 360
+            elif error < -180:
+                error = error + 360
+        if abs(error) > point_threshold[i]:
             return False
     return True
 
