@@ -21,6 +21,7 @@ new_set = False
 pid_updated = False
 robot_ready = False
 current_point = [0,0,0]
+stand_by = False
 
 def motor_name(no):
     if no == 2:
@@ -47,9 +48,14 @@ def at_point(p1, p2):
     return True
 
 def if_ready():
-    for i in range(3):
-        if not start_initialized[i]:
-            return False
+    global stand_by
+    global start_initialized
+    if not stand_by:
+        for i in range(3):
+            if not start_initialized[i]:
+                return False
+        print("Initialization complete, start_point: [ %f, %f, %f ], current_point: [ %f, %f, %f]")
+    stand_by = True
     return at_point(current_point, start_point)
 
 def on_message(client, userdata, msg):
@@ -113,17 +119,23 @@ def reset_robot():
     while not robot_ready:
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": start_point[0], "YSet": start_point[1], "PhiSet": start_point[2]}))
 
+def degreeFixer(angle):
+    if angle >= 360:
+        return angle - 360
+    if angle < 0:
+        return angle + 360
+
 def test_task():
     global target_point
     global current_point
     global start_point
-    target_point = [start_point[0], start_point[1], start_point[2] + 45]
+    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 45)]
     while not at_point(target_point, current_point):
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
-    target_point = [start_point[0], start_point[1], start_point[2] - 45]
+    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 45)]
     while not at_point(target_point, current_point):
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
-    target_point = [start_point[0], start_point[1], start_point[2]]
+    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2])]
     while not at_point(target_point, current_point):
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
 
