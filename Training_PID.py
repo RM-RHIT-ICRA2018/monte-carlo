@@ -124,6 +124,7 @@ def degreeFixer(angle):
         return angle - 360
     if angle < 0:
         return angle + 360
+    return angle
 
 def test_task():
     global target_point
