@@ -13,10 +13,13 @@ num_iter=1000
 
 new_result = -1
 num = 0
+record = [0, 0, 0.0, 0.0, 0.0] #[result, no, p, i, d]
+current_point = [0.0, 0.0, 0.0]
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT Interface Bind Success.")
     client.subscribe("/GIMBAL/TRAINING/RESULT")
+    client.subscribe("/GIMBAL/TRAINING/REQUEST")
 
     print("MQTT Subscribe Success")
 
@@ -25,7 +28,15 @@ def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/RESULT":
         new_result = payload["Result"]
+        if new_result > record[0]:
+            record[0] = new_result
+            record[1] = num
+            record[2] = current_point[0]
+            record[3] = current_point[1]
+            record[4] = current_point[2]
         print("New result received: %d" % new_result)
+    elif msg.topic == "/GIMBAL/TRAINING/REQUEST":
+        print(">>>>>>>>>>>> Score: %d, No: %d, P: %f, I: %f, D: %f <<<<<<<<<<<<" % (record[0],record[1],record[2],record[3],record[4]))
 
 def weighted_random(x, y):
     """
@@ -80,14 +91,18 @@ points=[[random.uniform(k_lower[i],k_upper[i]) for i in range(3)] for j in range
 new_points=[[random.uniform(k_lower[i],k_upper[i]) for i in range(3)] for j in range(num_points)]
 loss=[0 for i in range(num_points)]
 
+
+
 def main_loop():
     global loss
     global new_points
     global points
+    global current_point
     for i in range(num_iter):
         max_loss=0
         sum_loss=0
         for j in range(num_points):
+            current_point = points[j]
             loss[j]=test_points(points[j])
             sum_loss+=loss[j]
             if loss[j]>max_loss:

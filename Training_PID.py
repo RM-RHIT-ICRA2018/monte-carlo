@@ -9,20 +9,27 @@ start_point = [0,0,0]
 start_initialized = [False,False,False]
 threshold = 1
 point_threshold = [10, 10, 10]
+safe_pid = [15, 30, 0]
 
 pid_inited = False
 target_point = [0,0,0]
 PID_set = [[],[],[]]
+PID_safe = [[],[],[]]
 set_no = 0
 for i in range(3):
     for j in range(13):
         PID_set[i].append(0.0)
+        PID_safe[i].append(0.0)
+for i in range(3):
+    PID_safe[i][PID_Item_No] = safe_pid[i]
 count = 0
 new_set = False
 pid_updated = False
+pid_back = False
 robot_ready = False
 current_point = [0,0,0]
 stand_by = False
+fail = False
 
 def motor_name(no):
     if no == 2:
@@ -86,6 +93,8 @@ def on_message(client, userdata, msg):
     global robot_ready
     global pid_inited
     global threshold
+    global fail
+    global pid_back
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/SET":
         if set_no != payload["No"]:
@@ -101,6 +110,9 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/PID_REMOTE/":
         for i in range(13):
             if i != PID_Item_No:
+                PID_safe[0][i] = payload["Ps"][i]
+                PID_safe[1][i] = payload["Is"][i]
+                PID_safe[2][i] = payload["Ds"][i]
                 PID_set[0][i] = payload["Ps"][i]
                 PID_set[1][i] = payload["Is"][i]
                 PID_set[2][i] = payload["Ds"][i]
@@ -110,13 +122,19 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/PID_FEEDBACK/CAN":
         
         if not pid_updated:
-            if abs(payload["Ps"][PID_Item_No
-            ] - PID_set[0][PID_Item_No]) < 0.01:
+            if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
                         pid_updated = True
                         return
             pid_updated = False
+        if not pid_back:
+            if abs(payload["Ps"][PID_Item_No] - PID_safe[0][PID_Item_No]) < 0.01:
+                if abs(payload["Is"][PID_Item_No] - PID_safe[1][PID_Item_No]) < 0.01:
+                    if abs(payload["Ds"][PID_Item_No] - PID_safe[2][PID_Item_No]) < 0.01:
+                        pid_back = True
+                        return
+            pid_back = False
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
@@ -125,6 +143,8 @@ def on_message(client, userdata, msg):
             if abs(dd) < threshold:
                 print("b: %d" % count)
                 count = count + 1
+        elif payload["Type"] == "None":
+            fail = True
     elif msg.topic == "/UWB/POS":
         if start_initialized[0]:
             current_point[0] = payload["posX"]
@@ -151,6 +171,10 @@ def robot_stop():
 
 
 def reset_robot():
+    pid_back = False
+    while not pid_back:
+        client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_safe[0], "Is": PID_safe[1], "Ds": PID_safe[2]}))
+        time.sleep(0.2)
     while not robot_ready:
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": start_point[0], "YSet": start_point[1], "PhiSet": start_point[2]}))
 
@@ -167,14 +191,17 @@ def test_task():
     global start_point
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 45)]
     while not at_angle(target_point, current_point):
+        if fail: break
         time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 45)]
     while not at_angle(target_point, current_point):
+        if fail: break
         time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2])]
     while not at_angle(target_point, current_point):
+        if fail: break
         time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
 
@@ -184,6 +211,7 @@ def do_test():
     if new_set:
         pid_updated = False
         print("Test starts, No: %d" % set_no)
+        fail = False
         while not pid_updated:
             client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
             time.sleep(0.2)
@@ -191,10 +219,13 @@ def do_test():
         reset_robot()
         count = 0
         for i in range(rounds):
+            if fail: break
             print("Task Round %d" % i)
             test_task()
+        if fail: count = 0
         print(">>>>>> Publishing result: %d" % count)
         client.publish("/GIMBAL/TRAINING/RESULT", json.dumps({"Result": count}))
+        reset_robot()
         robot_stop()
 
 class TestThread(threading.Thread):
