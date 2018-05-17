@@ -187,12 +187,12 @@ def test_task():
     global target_point
     global current_point
     global start_point
-    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 45)]
+    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 60)]
     while not at_angle(target_point, current_point):
         if fail: break
         time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
-    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 45)]
+    target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 60)]
     while not at_angle(target_point, current_point):
         if fail: break
         time.sleep(0.05)
@@ -211,11 +211,11 @@ def do_test():
         pid_updated = False
         print("Test starts, No: %d" % set_no)
         fail = False
+        reset_robot()
         while not pid_updated:
             client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
             time.sleep(0.2)
         print("PID update success")
-        reset_robot()
         count = 0
         for i in range(rounds):
             if fail: break
