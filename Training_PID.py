@@ -85,6 +85,7 @@ def on_message(client, userdata, msg):
     global current_point
     global robot_ready
     global pid_inited
+    global threshold
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/SET":
         if set_no != payload["No"]:
@@ -119,7 +120,9 @@ def on_message(client, userdata, msg):
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
+            print("a: %d" % count)
             if abs(payload[wanted]) < threshold:
+                print("b: %d" % count)
                 count = count + 1
     elif msg.topic == "/UWB/POS":
         if start_initialized[0]:
