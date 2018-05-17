@@ -86,7 +86,7 @@ def on_message(client, userdata, msg):
             pid_updated = False
             new_set = True
     elif msg.topic == "/PID_FEEDBACK/CAN":
-        for i in range(13):
+        for i in range(8):
             if i != PID_Item_No:
                 PID_set[0][i] = payload["Ps"][i]
                 PID_set[1][i] = payload["Is"][i]
