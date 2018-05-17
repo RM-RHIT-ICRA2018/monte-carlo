@@ -74,7 +74,7 @@ def test_points(point):
 # ki_upper=1
 # ki_range=ki_upper-ki_lower
 k_lower=[0.0,0.0,0.0]
-k_upper=[100.0,100.0,10.0]
+k_upper=[100.0,100.0,1.0]
 k_range=[(k_upper[i]-k_lower[i]) for i in range(3)]
 points=[[random.uniform(k_lower[i],k_upper[i]) for i in range(3)] for j in range(num_points)]
 new_points=[[random.uniform(k_lower[i],k_upper[i]) for i in range(3)] for j in range(num_points)]
