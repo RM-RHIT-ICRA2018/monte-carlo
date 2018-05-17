@@ -201,7 +201,7 @@ client.connect("127.0.0.1", 1883, 60)
 client.loop_start()
 
 while not pid_inited:
-    client.publish("/PID_REMOTE/", json.dumps({"Ps": "Request"}))
+    client.publish("/PID_REMOTE/REQUEST", json.dumps({"Request": "Request"}))
     time.sleep(0.2)
 
 print("PiD_SET initialized")
