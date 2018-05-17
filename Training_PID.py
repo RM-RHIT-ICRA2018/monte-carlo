@@ -55,6 +55,16 @@ def at_point(p1, p2):
             return False
     return True
 
+def at_angle(p1, p2):
+    error = p1[2] - p2[2]
+    if error > 180:
+        error = error - 360
+    elif error < -180:
+        error = error + 360
+    if abs(error) > point_threshold[2]:
+        return False
+    return True
+
 def if_ready():
     global stand_by
     global start_initialized
@@ -152,16 +162,16 @@ def test_task():
     global current_point
     global start_point
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 45)]
-    while not at_point(target_point, current_point):
-        time.sleep(0.1)
+    while not at_angle(target_point, current_point):
+        time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] - 45)]
-    while not at_point(target_point, current_point):
-        time.sleep(0.1)
+    while not at_angle(target_point, current_point):
+        time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2])]
-    while not at_point(target_point, current_point):
-        time.sleep(0.1)
+    while not at_angle(target_point, current_point):
+        time.sleep(0.05)
         client.publish("/CHASSIS/SET", json.dumps({"Type": "position", "XSet": target_point[0], "YSet": target_point[1], "PhiSet": target_point[2]}))
 
 def do_test():
