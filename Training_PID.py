@@ -131,7 +131,7 @@ def on_message(client, userdata, msg):
                 if abs(payload["Is"][PID_Item_No] - PID_safe[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_safe[2][PID_Item_No]) < 0.01:
                         pid_back = True
-                        
+
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
@@ -168,6 +168,7 @@ def robot_stop():
 
 
 def reset_robot():
+    global pid_back
     pid_back = False
     while not pid_back:
         client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_safe[0], "Is": PID_safe[1], "Ds": PID_safe[2]}))
