@@ -121,21 +121,17 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == "/PID_FEEDBACK/CAN":
         
-        while not pid_updated:
+        if not pid_updated:
             if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
                         pid_updated = True
-                        break
-            pid_updated = False
-            break
         if not pid_back:
             if abs(payload["Ps"][PID_Item_No] - PID_safe[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_safe[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_safe[2][PID_Item_No]) < 0.01:
                         pid_back = True
-                        return
-            pid_back = False
+                        
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
