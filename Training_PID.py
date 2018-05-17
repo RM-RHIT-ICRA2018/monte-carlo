@@ -139,9 +139,9 @@ def on_message(client, userdata, msg):
         if payload["Type"] == "Image":
             wanted = motor_name(PID_Item_No)
             dd = math.atan(payload[wanted]/1500)*90/math.pi
-            print("a: %d" % count)
+            # print("a: %d" % count)
             if abs(dd) < threshold:
-                print("b: %d" % count)
+                # print("b: %d" % count)
                 count = count + 1
         elif payload["Type"] == "None":
             fail = True
