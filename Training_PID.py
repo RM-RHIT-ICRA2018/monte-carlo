@@ -88,9 +88,11 @@ def on_message(client, userdata, msg):
             new_set = True
 
     elif msg.topic == "/PID_REMOTE/":
-        PID_set[0] = payload["Ps"]
-        PID_set[1] = payload["Is"]
-        PID_set[2] = payload["Ds"]
+        for i in range(13):
+            if i != PID_Item_No:
+                PID_set[0][i] = payload["Ps"][i]
+                PID_set[1][i] = payload["Is"][i]
+                PID_set[2][i] = payload["Ds"][i]
         pid_inited = True
 
 
