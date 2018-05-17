@@ -9,7 +9,7 @@ start_point = [0,0,0]
 start_initialized = [False,False,False]
 threshold = 1
 point_threshold = [10, 10, 10]
-safe_pid = [15, 30, 0]
+safe_pid = [20, 0, 0]
 
 pid_inited = False
 target_point = [0,0,0]
@@ -121,13 +121,14 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == "/PID_FEEDBACK/CAN":
         
-        if not pid_updated:
+        while not pid_updated:
             if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
                         pid_updated = True
-                        return
+                        break
             pid_updated = False
+            break
         if not pid_back:
             if abs(payload["Ps"][PID_Item_No] - PID_safe[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_safe[1][PID_Item_No]) < 0.01:
