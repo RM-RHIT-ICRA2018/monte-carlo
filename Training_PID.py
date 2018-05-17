@@ -208,6 +208,7 @@ def test_task():
 def do_test():
     global count
     global pid_updated
+    global fail
     if new_set:
         pid_updated = False
         print("Test starts, No: %d" % set_no)
