@@ -26,9 +26,9 @@ stand_by = False
 
 def motor_name(no):
     if no == 2:
-        return "dx"
+        return "dX"
     if no == 4:
-        return "dy"
+        return "dY
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT Interface Bind Success.")
