@@ -10,6 +10,7 @@ start_initialized = [False,False,False]
 threshold = 1
 point_threshold = [10, 10, 10]
 
+pid_inited = False
 target_point = [0,0,0]
 PID_set = [[],[],[]]
 set_no = 0
@@ -72,6 +73,7 @@ def on_message(client, userdata, msg):
     global count
     global current_point
     global robot_ready
+    global pid_inited
     payload = json.loads(msg.payload.decode("utf-8"))
     if msg.topic == "/GIMBAL/TRAINING/SET":
         if set_no != payload["No"]:
@@ -80,10 +82,16 @@ def on_message(client, userdata, msg):
             PID_set[2][PID_Item_No] = payload["Kd"]
             set_no = payload["No"]
             # PID_set[3][PID_Item_No] = payload["Gi"]
-            print("New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][PID_Item_No], PID_set[1][PID_Item_No], PID_set[2][PID_Item_No]))
+            print("<<<<<< New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][PID_Item_No], PID_set[1][PID_Item_No], PID_set[2][PID_Item_No]))
             pid_updated = False
             new_set = True
     elif msg.topic == "/PID_FEEDBACK/CAN":
+        for i in range(13):
+            if i != PID_Item_No:
+                PID_set[0][i] = payload["Ps"][i]
+                PID_set[1][i] = payload["Is"][i]
+                PID_set[2][i] = payload["Ds"][i]
+        pid_inited = True
         if not pid_updated:
             if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
@@ -155,16 +163,16 @@ def do_test():
     if new_set:
         pid_updated = False
         print("Test starts, No: %d" % set_no)
-        # while not pid_updated:
-        #     client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
-        #     time.sleep(0.2)
-        # print("PID update success")
+        while not pid_updated:
+            client.publish("/PID_REMOTE/", json.dumps({"Ps": PID_set[0], "Is": PID_set[1], "Ds": PID_set[2]}))
+            time.sleep(0.2)
+        print("PID update success")
         reset_robot()
         count = 0
         for i in range(rounds):
             print("Task Round %d" % i)
             test_task()
-        print("Publishing result: %d" % count)
+        print(">>>>>> Publishing result: %d" % count)
         client.publish("/GIMBAL/TRAINING/RESULT", json.dumps({"Result": count}))
         robot_stop()
 
@@ -190,7 +198,15 @@ print("MQTT Interface Start Binding.")
 
 client.connect("127.0.0.1", 1883, 60)
 
+client.loop_start()
+
+while not pid_inited:
+    client.publish("/PID_REMOTE/", json.dumps({"Ps": "Request"}))
+    time.sleep(0.2)
+
+print("PiD_SET initialized")
+
 Test_thread = TestThread()
 Test_thread.start()
 
-client.loop_forever()
+
