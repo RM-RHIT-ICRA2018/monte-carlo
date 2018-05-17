@@ -37,6 +37,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/PID_FEEDBACK/CAN")
     client.subscribe("/UWB/POS")
     client.subscribe("/CHASSIS/AHRS/ALIG")
+    client.subscribe("/PID_REMOTE/")
 
     print("MQTT Subscribe Success")
     # t = threading.Thread(target = CAN_RCV_LOOP)
@@ -85,15 +86,19 @@ def on_message(client, userdata, msg):
             print("<<<<<< New set received, No: %d, P: %f, I: %f, D: %f" % (set_no, PID_set[0][PID_Item_No], PID_set[1][PID_Item_No], PID_set[2][PID_Item_No]))
             pid_updated = False
             new_set = True
-    elif msg.topic == "/PID_FEEDBACK/CAN":
-        for i in range(8):
-            if i != PID_Item_No:
-                PID_set[0][i] = payload["Ps"][i]
-                PID_set[1][i] = payload["Is"][i]
-                PID_set[2][i] = payload["Ds"][i]
+
+    elif msg.topic == "/PID_REMOTE/":
+        PID_set[0] = payload["Ps"]
+        PID_set[1] = payload["Is"]
+        PID_set[2] = payload["Ds"]
         pid_inited = True
+
+
+    elif msg.topic == "/PID_FEEDBACK/CAN":
+        
         if not pid_updated:
-            if abs(payload["Ps"][PID_Item_No] - PID_set[0][PID_Item_No]) < 0.01:
+            if abs(payload["Ps"][PID_Item_No
+            ] - PID_set[0][PID_Item_No]) < 0.01:
                 if abs(payload["Is"][PID_Item_No] - PID_set[1][PID_Item_No]) < 0.01:
                     if abs(payload["Ds"][PID_Item_No] - PID_set[2][PID_Item_No]) < 0.01:
                         pid_updated = True
