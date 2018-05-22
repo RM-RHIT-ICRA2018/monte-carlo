@@ -134,12 +134,15 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == "/GIMBAL/SET":
         if payload["Type"] == "Image":
-            wanted = motor_name(PID_Item_No)
-            dd = math.atan(payload[wanted]/1500)*90/math.pi
-            # print("a: %d" % count)
-            if abs(dd) < threshold:
-                # print("b: %d" % count)
-                count = count + 1
+            if payload["Target"] == "Positive":
+                wanted = motor_name(PID_Item_No)
+                dd = math.atan(payload[wanted]/1500)*90/math.pi
+                # print("a: %d" % count)
+                if abs(dd) < threshold:
+                    # print("b: %d" % count)
+                    count = count + 1
+            else:
+                fail = True
         elif payload["Type"] == "None":
             fail = True
     elif msg.topic == "/UWB/POS":
