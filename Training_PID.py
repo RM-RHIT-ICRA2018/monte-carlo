@@ -190,6 +190,7 @@ def test_task():
     global target_point
     global current_point
     global start_point
+    global fail
     target_point = [start_point[0], start_point[1], degreeFixer(start_point[2] + 60)]
     while not at_angle(target_point, current_point):
         if fail: break
